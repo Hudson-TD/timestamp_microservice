@@ -19,35 +19,37 @@ app.get("/", function (req, res) {
 });
 
 app.get("/api", (req, res) => {
-  let currentUTC = new Date();
-  let currentTimeUnix = Math.floor(new Date().getTime() / 1000);
-
-  let formatedGMT = currentUTC.toUTCString();
-
-  res.json({ unix: currentTimeUnix, utc: formatedGMT });
+  let utc = new Date().toUTCString();
+  let unix = Math.floor(Date.now());
+  res.json({
+    unix: unix,
+    utc: utc
+  })
 });
 
 app.get("/api/:date", (req, res) => {
   let query = req.params.date;
-  let parsedDate;
+  let validate = new Date(query);
 
-  if (!isNaN(query) && isFinite(query)) {
-    // If the parameter is a valid number, assume it's a Unix timestamp
-    parsedDate = new Date(parseInt(query, 10) * 1000);
-  } else {
-    // If not a number, assume date format and attempt to parse
-    parsedDate = new Date(query);
+  if (isNaN(validate)) {
+    query = parseInt(query);
+
+    if (isNaN(query)) {
+      res.send({ error: "Invalid Date" })
+    }
+
+    let utc = new Date(query).toUTCString();
+    res.json({
+      unix: query,
+      utc: utc
+    })
   }
 
-  if (isNaN(parsedDate)) {
-    res.send({ error: "Invalid Date" });
-  } else {
-    let formatedGMT = parsedDate.toUTCString();
-    let parsedUnix = parsedDate.getTime() / 1000;
-    res.json({ unix: parsedUnix, utc: formatedGMT });
-  }
-});
-
+  res.json({
+    unix: Math.floor(validate.getTime()),
+    utc: validate.toUTCString()
+  })
+})
 // Listen on port set in environment variable or default to 3000
 var listener = app.listen(process.env.PORT || 3000, function () {
   console.log("Your app is listening on port " + listener.address().port);
